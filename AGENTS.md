@@ -18,6 +18,16 @@ This is the **opencode-live-timer** plugin: an opencode plugin that adds a live 
 
 A change is **not done** until `bun test`, `bunx tsc --noEmit`, and `bunx biome check .` all pass clean.
 
+## Automation
+
+This plugin's workflow is fully automated inside an agent session. The agent:
+
+- **Works on a branch, never `main`.** At the start of work, create a branch off `main` named `<type>/<short-kebab-desc>` matching the commit type and a short description (e.g. `chore/scaffold`, `feat/timer-tick`).
+- **Commits automatically when green.** After every change where `bun test`, `bunx tsc --noEmit`, and `bunx biome check .` all pass, create a commit using the conventional-commits format below. Do not batch. Do not ask first.
+- **Pushes after every commit.** `git push` the current branch; on the first push of a new branch, pass `-u origin <branch>` to set upstream. Never force-push; never amend a pushed commit; never use `--no-verify`.
+
+If any gate fails, fix the root cause and re-run all three before committing. Do not commit a failing state, do not skip a gate, do not use `--no-verify` to bypass one.
+
 ## Project layout
 
 ```
@@ -185,8 +195,8 @@ If a step is not yet green, do not commit it. But also: do not start a new step 
 
 ### Git hygiene
 
-- **Never** amend, force-push, or use `--no-verify` without an explicit user request in the same session.
-- **Never** commit to `main` directly. Use a branch and a PR.
+- **Never** force-push, amend a pushed commit, or use `--no-verify`. Banned outright, not gated on user request.
+- **Never** commit to `main` directly. The Automation section governs branch creation and pushing.
 - **Never** include secrets, tokens, or `.env` contents, even in examples.
 
 ## Plugin-specific rules
@@ -199,7 +209,7 @@ If a step is not yet green, do not commit it. But also: do not start a new step 
 ## Forbidden actions
 
 - Committing to `main` directly.
-- Force-pushing, amending pushed commits, or skipping hooks without explicit user instruction.
+- Force-pushing, amending pushed commits, or skipping hooks (e.g. `--no-verify`).
 - Adding `console.log`, `any`, `// @ts-ignore`, or `// @ts-expect-error` without a comment explaining why and a `// TODO(remove)` linked to an issue.
 - Tests that depend on real time, real network, or real filesystem state outside a temp dir.
 - Bundling or forking opencode itself — it is a peer dep.
