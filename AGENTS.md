@@ -23,7 +23,7 @@ A change is **not done** until `bun test`, `bunx tsc --noEmit`, and `bunx biome 
 This plugin's workflow is fully automated inside an agent session. The agent:
 
 - **Works on a branch, never `main`.** At the start of work, create a branch off `main` named `<type>/<short-kebab-desc>` matching the commit type and a short description (e.g. `chore/scaffold`, `feat/timer-tick`).
-- **Commits automatically when green.** After every change where `bun test`, `bunx tsc --noEmit`, and `bunx biome check .` all pass, create a commit using the conventional-commits format below. Do not batch. Do not ask first.
+- **Commits only at vertical-slice boundaries.** A vertical slice is one user-visible behaviour (or one refactor / config / docs change that leaves behaviour identical) wired end-to-end into `src/index.ts` and covered by tests. After a slice is fully green (`bun test`, `bunx tsc --noEmit`, and `bunx biome check .` all pass), create a single commit using the conventional-commits format below. Do not commit mid-slice. Do not ask first.
 - **Pushes after every commit.** `git push` the current branch; on the first push of a new branch, pass `-u origin <branch>` to set upstream. Never force-push; never amend a pushed commit; never use `--no-verify`.
 
 If any gate fails, fix the root cause and re-run all three before committing. Do not commit a failing state, do not skip a gate, do not use `--no-verify` to bypass one.
@@ -105,20 +105,22 @@ Before every commit, all of the following must be true:
 
 If any step fails, fix the root cause. Do not skip or silence checks.
 
-## Commit conventions — small, regular, conventional
+## Commit conventions — one slice per commit
 
-> **Commit after every small change.** Don't wait. Don't batch. If the change is green and atomic, commit it now.
+> **One commit = one vertical slice.** A slice is complete only when the new behaviour (or refactor) is wired in, tested, and passes every gate. Mid-slice work — a passing helper, a passing test, a passing refactor on top of a still-broken feature — stays uncommitted.
 
-A "small change" is anything that passes `bun test`, `bunx tsc --noEmit`, and `bunx biome check .` on its own and is one logical step. Examples:
+A slice is a meaningful unit of work that an end user (or future maintainer) can recognise as one thing. Examples:
 
-- A new test that drives a small bit of production code into green.
-- A rename, extract, or dedupe that leaves behaviour identical.
-- A bug fix with a regression test.
-- Adding or changing one configuration value.
-- Adding one dependency (its own commit).
-- One doc change.
+- A new feature wired into `src/index.ts` with tests at every layer.
+- A bug fix with its regression test, all green.
+- A dependency add, upgrade, or removal on its own.
+- A config-only change (`biome.json`, `tsconfig.json`, `package.json` scripts).
+- A docs-only change.
+- A pure refactor (rename, extract, dedupe) that leaves behaviour identical, with all tests still green.
 
-When in doubt: split the work into more commits, not fewer. A branch with 20 small, focused commits is better than one with 3 large ones.
+Helper functions, state machines, and other building blocks that are not yet wired into the plugin are **not** slices. Build them up, keep the gates green between steps, then commit once at the slice boundary.
+
+When in doubt: split the work into more slices, not fewer. A branch with a handful of focused slice commits is better than one mega-commit or a swarm of micro-commits.
 
 ### Format
 
@@ -176,22 +178,20 @@ Use the most specific scope. Drop the scope only if the change genuinely spans t
 
 ### Size rule
 
-One commit = one logical change. If a diff touches more than one of: a feature, a refactor, a fix, a test-only change, **split it**. Aim for **<200 lines changed** per commit; if a commit is larger, justify it in the body or split it.
+One slice = one commit. If a diff touches more than one of: a feature, a refactor, a fix, a test-only change, **split it into multiple slices**. Aim for **<400 lines changed** per slice; if a slice is larger, justify it in the body or split it.
 
-### Frequency rule — commit now, not later
+### Slice rule — commit at the boundary, not mid-slice
 
-Commit as soon as a logical step is complete and green. Green test for a new behaviour? **Commit now.** Finished a refactor with all tests still green? **Commit now.** Fixed a typo and the linter is happy? **Commit now.** Do not stockpile half-days of work into a single squash.
+Commit exactly once per vertical slice, at the moment the slice is complete and every gate is green. Do not commit mid-slice work — a green helper, a passing test for unwired code, a green refactor on top of a still-broken feature — even though those intermediate states satisfy the gates.
 
-Concrete triggers that should produce a commit in the same response that produces them:
+A slice is complete when **all** of the following are true:
 
-- A test goes from red to green.
-- A `tsc` or `biome` error is fixed.
-- A new file, function, type, or constant is added.
-- A rename, extract, or dedupe is finished.
-- A dependency is added, upgraded, or removed (its own commit).
-- A configuration value in `biome.json`, `tsconfig.json`, or `package.json` changes.
+- The new behaviour is wired into `src/index.ts` (or it is a standalone refactor / config / docs change).
+- Every hook handler and pure helper introduced by the slice has tests.
+- The integration test in `src/__tests__/integration.test.ts` reflects the new behaviour.
+- `bun test`, `bunx tsc --noEmit`, and `bunx biome check .` all pass clean.
 
-If a step is not yet green, do not commit it. But also: do not start a new step on top of a green one — commit the green step first.
+When all four are true, commit the whole slice in a single response and push.
 
 ### Git hygiene
 
