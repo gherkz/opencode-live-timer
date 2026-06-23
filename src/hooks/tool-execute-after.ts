@@ -27,6 +27,13 @@ export function createToolExecuteAfter(
   return async (input, output) => {
     const elapsed = stopTimer(timers, input.callID, clock)
     const duration = formatDuration(elapsed)
-    output.output = `${output.output}\n\nDuration: ${duration}`
+    const footer = `\n\nDuration: ${duration}`
+    output.output = `${output.output}${footer}`
+    if (output.metadata !== null && typeof output.metadata === 'object') {
+      const meta = output.metadata as Record<string, unknown>
+      if (typeof meta.output === 'string') {
+        meta.output = `${meta.output}${footer}`
+      }
+    }
   }
 }
