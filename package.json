@@ -13,7 +13,9 @@
     "typecheck": "bunx tsc --noEmit",
     "lint": "bunx biome check .",
     "lint:fix": "bunx biome check --write .",
-    "dev": "bun --watch src/index.ts"
+    "dev": "bun --watch src/index.ts",
+    "install": "bun run scripts/install.ts",
+    "uninstall": "bun run scripts/uninstall.ts"
   },
   "peerDependencies": {
     "@opencode-ai/plugin": "*"
