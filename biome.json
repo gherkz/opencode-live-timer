@@ -27,7 +27,7 @@
     }
   },
   "files": {
-    "include": ["src/**/*.ts"],
+    "include": ["src/**/*.ts", "scripts/**/*.ts"],
     "ignore": ["node_modules"]
   }
 }
