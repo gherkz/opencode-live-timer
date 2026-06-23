@@ -1,71 +1,78 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
-  readlinkSync,
+  readFileSync,
   rmSync,
   symlinkSync,
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { linkPlugin } from './install'
+import { installPlugin } from './install'
 
 let root: string
 let source: string
 let target: string
+const sourceContent = 'export default {}\n'
 
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'live-timer-install-'))
   source = join(root, 'source.ts')
   target = join(root, 'nested', 'plugins', 'live-timer.ts')
-  writeFileSync(source, 'export default {}')
+  writeFileSync(source, sourceContent)
 })
 
 afterEach(() => {
   rmSync(root, { recursive: true, force: true })
 })
 
-describe('linkPlugin', () => {
+describe('installPlugin', () => {
   it('creates the target directory when it is missing', () => {
     expect(existsSync(join(root, 'nested'))).toBe(false)
-    linkPlugin({ source, target })
+    installPlugin({ source, target })
     expect(existsSync(join(root, 'nested', 'plugins'))).toBe(true)
   })
 
-  it('creates a symlink that resolves to the source file', () => {
-    linkPlugin({ source, target })
-    expect(readlinkSync(target)).toBe(source)
+  it('copies the source content to the target', () => {
+    installPlugin({ source, target })
+    expect(readFileSync(target, 'utf8')).toBe(sourceContent)
   })
 
-  it('overwrites an existing file at the target', () => {
+  it('produces a regular file at the target, not a symlink', () => {
+    installPlugin({ source, target })
+    const stat = lstatSync(target)
+    expect(stat.isSymbolicLink()).toBe(false)
+    expect(stat.isFile()).toBe(true)
+  })
+
+  it('overwrites an existing regular file at the target', () => {
     mkdirSync(join(root, 'nested', 'plugins'), { recursive: true })
-    writeFileSync(target, 'stale')
-    linkPlugin({ source, target })
-    expect(readlinkSync(target)).toBe(source)
+    writeFileSync(target, 'stale content')
+    installPlugin({ source, target })
+    expect(readFileSync(target, 'utf8')).toBe(sourceContent)
   })
 
-  it('overwrites a stale symlink pointing elsewhere', () => {
+  it('overwrites a symlink already present at the target', () => {
     mkdirSync(join(root, 'nested', 'plugins'), { recursive: true })
     const other = join(root, 'other.ts')
-    writeFileSync(other, 'other')
+    writeFileSync(other, 'other content')
     symlinkSync(other, target)
-    linkPlugin({ source, target })
-    expect(readlinkSync(target)).toBe(source)
+    installPlugin({ source, target })
+    expect(lstatSync(target).isSymbolicLink()).toBe(false)
+    expect(readFileSync(target, 'utf8')).toBe(sourceContent)
   })
 
-  it('is idempotent when the symlink already points at the source', () => {
-    mkdirSync(join(root, 'nested', 'plugins'), { recursive: true })
-    symlinkSync(source, target)
-    linkPlugin({ source, target })
-    expect(readlinkSync(target)).toBe(source)
+  it('re-runs are idempotent when the source is unchanged', () => {
+    installPlugin({ source, target })
+    installPlugin({ source, target })
+    expect(readFileSync(target, 'utf8')).toBe(sourceContent)
   })
 
   it('leaves the source file untouched', () => {
-    const before = 'export default {}'
-    writeFileSync(source, before)
-    linkPlugin({ source, target })
-    expect(existsSync(source)).toBe(true)
+    installPlugin({ source, target })
+    expect(readFileSync(source, 'utf8')).toBe(sourceContent)
   })
 })
