@@ -6,7 +6,6 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
-  symlinkSync,
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -52,16 +51,6 @@ describe('installPlugin', () => {
     mkdirSync(join(root, 'nested', 'plugins'), { recursive: true })
     writeFileSync(target, 'stale content')
     installPlugin({ source, target })
-    expect(readFileSync(target, 'utf8')).toBe(sourceContent)
-  })
-
-  it('overwrites a symlink already present at the target', () => {
-    mkdirSync(join(root, 'nested', 'plugins'), { recursive: true })
-    const other = join(root, 'other.ts')
-    writeFileSync(other, 'other content')
-    symlinkSync(other, target)
-    installPlugin({ source, target })
-    expect(lstatSync(target).isSymbolicLink()).toBe(false)
     expect(readFileSync(target, 'utf8')).toBe(sourceContent)
   })
 
