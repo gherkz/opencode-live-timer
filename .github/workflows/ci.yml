@@ -14,7 +14,11 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1
-      - run: bun install --frozen-lockfile
-      - run: bun test
-      - run: bunx tsc --noEmit
-      - run: bunx biome check .
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Test
+        run: bun test
+      - name: Type check
+        run: bunx tsc --noEmit
+      - name: Lint and format
+        run: bunx biome check .
