@@ -53,7 +53,7 @@ tsconfig.json
 ## Setup
 
 1. `bun install` — installs runtime + dev deps.
-2. For local development, link the entry file into opencode's global plugin directory with `bun run install`. This creates `~/.config/opencode/plugins/live-timer.ts` as a symlink to `src/index.ts`. Use `bun run uninstall` to remove it. The script overwrites any existing path at the target, so reruns are safe. The legacy manual `ln -s` form still works for project-local installs under `.opencode/plugins/`.
+2. For local development, copy the entry file into opencode's global plugin directory with `bun run install`. This writes `~/.config/opencode/plugins/live-timer.ts` as a regular file containing the current contents of `src/index.ts`. Use `bun run uninstall` to remove it. The script overwrites any existing path at the target, so reruns are safe. Because it is a copy rather than a symlink, uncommitted edits to `src/index.ts` are not visible to opencode until you re-run `bun run install`. The legacy manual `ln -s` form still works for project-local installs under `.opencode/plugins/`.
 3. `bun run dev` is a placeholder script for whatever local iteration loop is added later (e.g. `bun --watch src/index.ts`).
 
 ## Code style
