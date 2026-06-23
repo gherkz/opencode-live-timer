@@ -87,4 +87,53 @@ describe('tool.execute.after', () => {
     await hook({ tool: 'bash', sessionID: 's1', callID: 'c1', args: {} }, output)
     expect(timers.has('c1')).toBe(false)
   })
+
+  it('appends the duration footer to metadata.output when metadata has a string output', async () => {
+    const timers = map()
+    let now = 1_000
+    const clock = (): number => now
+    const hook = createToolExecuteAfter(timers, clock)
+    timers.set('c1', 1_000)
+    now = 1_750
+    const metadata = { output: 'hello world', exit: 0, description: 'echo', truncated: false }
+    const output = { title: 'Bash', output: 'hello world', metadata }
+    await hook({ tool: 'bash', sessionID: 's1', callID: 'c1', args: {} }, output)
+    expect(metadata.output).toBe('hello world\n\nDuration: 750ms')
+    expect(metadata.exit).toBe(0)
+    expect(metadata.description).toBe('echo')
+    expect(metadata.truncated).toBe(false)
+  })
+
+  it('does not throw when metadata is null', async () => {
+    const timers = map()
+    const clock = (): number => 1_000
+    const hook = createToolExecuteAfter(timers, clock)
+    const output = { title: 'Bash', output: 'x', metadata: null }
+    await expect(
+      hook({ tool: 'bash', sessionID: 's1', callID: 'unknown', args: {} }, output),
+    ).resolves.toBeUndefined()
+    expect(output.output).toBe('x\n\nDuration: 0s')
+  })
+
+  it('does not throw when metadata has no output field', async () => {
+    const timers = map()
+    const clock = (): number => 1_000
+    const hook = createToolExecuteAfter(timers, clock)
+    const output = { title: 'Bash', output: 'x', metadata: { exit: 0 } }
+    await expect(
+      hook({ tool: 'bash', sessionID: 's1', callID: 'unknown', args: {} }, output),
+    ).resolves.toBeUndefined()
+    expect(output.metadata).toEqual({ exit: 0 })
+  })
+
+  it('does not throw when metadata.output is not a string', async () => {
+    const timers = map()
+    const clock = (): number => 1_000
+    const hook = createToolExecuteAfter(timers, clock)
+    const output = { title: 'Read', output: 'x', metadata: { output: { bytes: 12 } } }
+    await expect(
+      hook({ tool: 'read', sessionID: 's1', callID: 'unknown', args: {} }, output),
+    ).resolves.toBeUndefined()
+    expect(output.metadata).toEqual({ output: { bytes: 12 } })
+  })
 })
