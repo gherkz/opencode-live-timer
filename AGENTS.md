@@ -122,7 +122,17 @@ When in doubt: split the work into more commits, not fewer. A branch with 20 sma
 
 - **Subject:** imperative mood ("add", not "added"), lowercase first letter, no trailing period, ≤72 characters, no emoji.
 - **Body:** wrap at 100 columns, explain *why* not *what*, separate from subject with a blank line. Omit the body when the subject is self-explanatory.
-- **Footer:** `BREAKING CHANGE: <description>` for breaking changes, or `Refs: #123` for issue links.
+- **Footer:** `Co-authored-by:` trailer(s) for AI-assisted work (see [Trailers](#trailers) below).
+
+### Trailers
+
+For AI-assisted commits, attribute the AI using the GitHub-standard `Co-authored-by:` trailer:
+
+```
+Co-authored-by: opencode <noreply@opencode.ai>
+```
+
+Stack multiple `Co-authored-by:` lines in author order when several AIs contributed. The email is a no-reply address on the tool's domain; GitHub renders the trailer as a clickable link on the commit. The specific model behind the tool is not part of the standard and is left out unless a project requires it.
 
 ### Types
 
