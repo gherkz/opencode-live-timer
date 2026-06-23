@@ -25,8 +25,8 @@ A change is **not done** until `bun test`, `bunx tsc --noEmit`, and `bunx biome 
 This plugin's workflow is fully automated inside an agent session. The agent:
 
 - **Works on a branch, never `main`.** At the start of work, create a branch off `main` named `<type>/<short-kebab-desc>` matching the commit type and a short description (e.g. `chore/scaffold`, `feat/timer-tick`).
-- **Commits only at vertical-slice boundaries.** A vertical slice is one user-visible behaviour (or one refactor / config / docs change that leaves behaviour identical) wired end-to-end into `src/index.ts` and covered by tests. After a slice is fully green (`bun test`, `bunx tsc --noEmit`, and `bunx biome check .` all pass), create a single commit using the conventional-commits format below. Do not commit mid-slice. Do not ask first.
-- **Pushes after every commit.** `git push` the current branch; on the first push of a new branch, pass `-u origin <branch>` to set upstream. Never force-push; never amend a pushed commit; never use `--no-verify`.
+- **Never commits without being asked.** Do not run `git commit` on the agent's own initiative. When a vertical slice is complete and every gate is green (`bun test`, `bunx tsc --noEmit`, and `bunx biome check .` all pass), stop and explicitly ask the user whether to commit. Once the user approves, create a single commit using the conventional-commits format below. Do not commit mid-slice. Do not ask first whether the slice is ready — only whether to commit it.
+- **Always auto-pushes after every commit.** As soon as a commit lands, `git push` the current branch; on the first push of a new branch, pass `-u origin <branch>` to set upstream. Never force-push; never amend a pushed commit; never use `--no-verify`.
 
 If any gate fails, fix the root cause and re-run all three before committing. Do not commit a failing state, do not skip a gate, do not use `--no-verify` to bypass one.
 
@@ -182,7 +182,7 @@ One slice = one commit. If a diff touches more than one of: a feature, a refacto
 
 ### Slice rule — commit at the boundary, not mid-slice
 
-Commit exactly once per vertical slice, at the moment the slice is complete and every gate is green. Do not commit mid-slice work — a green helper, a passing test for unwired code, a green refactor on top of a still-broken feature — even though those intermediate states satisfy the gates.
+Commit exactly once per vertical slice, at the moment the slice is complete and every gate is green — but only when the user asks. Do not commit mid-slice work — a green helper, a passing test for unwired code, a green refactor on top of a still-broken feature — even though those intermediate states satisfy the gates.
 
 A slice is complete when **all** of the following are true:
 
@@ -191,7 +191,7 @@ A slice is complete when **all** of the following are true:
 - The integration test in `src/__tests__/integration.test.ts` reflects the new behaviour.
 - `bun test`, `bunx tsc --noEmit`, and `bunx biome check .` all pass clean.
 
-When all four are true, commit the whole slice in a single response and push.
+When all four are true, **stop and ask the user before committing**. Once the user approves, commit the whole slice and push in a single step.
 
 ### Git hygiene
 
