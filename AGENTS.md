@@ -15,6 +15,8 @@ This is the **opencode-live-timer** plugin: an opencode plugin that adds a live 
 | Lint + format check | `bunx biome check .` |
 | Lint + auto-fix | `bunx biome check --write .` |
 | Local dev (link into opencode) | `bun run dev` |
+| Install plugin globally | `bun run install` |
+| Uninstall plugin globally | `bun run uninstall` |
 
 A change is **not done** until `bun test`, `bunx tsc --noEmit`, and `bunx biome check .` all pass clean.
 
@@ -51,9 +53,7 @@ tsconfig.json
 ## Setup
 
 1. `bun install` — installs runtime + dev deps.
-2. For local development, link the entry file into opencode's plugin directory:
-   - Project-local: `ln -s "$(pwd)/src/index.ts" .opencode/plugins/live-timer.ts`, or
-   - Global: `ln -s "$(pwd)/src/index.ts" ~/.config/opencode/plugins/live-timer.ts`.
+2. For local development, link the entry file into opencode's global plugin directory with `bun run install`. This creates `~/.config/opencode/plugins/live-timer.ts` as a symlink to `src/index.ts`. Use `bun run uninstall` to remove it. The script overwrites any existing path at the target, so reruns are safe. The legacy manual `ln -s` form still works for project-local installs under `.opencode/plugins/`.
 3. `bun run dev` is a placeholder script for whatever local iteration loop is added later (e.g. `bun --watch src/index.ts`).
 
 ## Code style
